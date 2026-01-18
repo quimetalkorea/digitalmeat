@@ -7,8 +7,7 @@ st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
 # 구글 시트 웹 게시용 CSV 주소 적용
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPI4EEFi_0oWxYkVh0jL6dT1PScbAikQIV6QM14U3KkWrZkoQ3WlDMzUzrkPGGuVd0-T7UNlKRURC-/pub?output=csv"
-
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQK-pnMaAkUEQBD6sAKGpN_m6UL0iVRn_wUO4svZNu7HdUeyo4prYAj1DlZzqPMSTU0brPdtgSh0ycx/pub?output=csv"
 @st.cache_data(ttl=60) # 60초마다 구글 시트의 최신 데이터를 확인합니다.
 def load_data():
     try:
