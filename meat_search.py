@@ -12,11 +12,10 @@ GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPI4EEFi_0o
 @st.cache_data(ttl=30)
 def load_data():
     try:
-        # 구글 시트에서 데이터를 직접 읽어옵니다.
         df = pd.read_csv(GOOGLE_SHEET_URL)
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
         
-        # '날짜' 열이 있다면 최신순으로 정렬합니다.
+        # '날짜' 열이 있다면 최신순으로 정렬
         if '날짜' in df.columns:
             df['날짜'] = pd.to_datetime(df['날짜'], errors='coerce').dt.date
             df = df.sort_values(by='날짜', ascending=False)
@@ -29,19 +28,27 @@ def load_data():
 df = load_data()
 
 # 검색창
-search_term = st.text_input("부위명, 원산지 또는 날짜(예: 2026-01-18)를 입력하세요", "")
+search_term = st.text_input("부위명, 브랜드 또는 날짜(예: 2026-01-18)를 입력하세요", "")
 
 if search_term and not df.empty:
-    # 전체 열(업체명 포함)에서 검색을 수행합니다.
     mask = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
     results = df[mask]
 
     if not results.empty:
         st.success(f"검색 결과: {len(results)}건")
         
-        # '업체' 열만 제외하고 '날짜'를 포함하여 출력합니다.
-        cols_to_show = [col for col in results.columns if '업체' not in col]
-        st.dataframe(results[cols_to_show], use_container_width=True, hide_index=True)
+        # --- 열 순서 재배치 및 업체명 제외 ---
+        # 1. '업체'가 들어간 열 제외
+        cols = [col for col in results.columns if '업체' not in col]
+        
+        # 2. '날짜' 열이 있다면 맨 앞으로 가져오기
+        if '날짜' in cols:
+            cols.insert(0, cols.pop(cols.index('날짜')))
+            
+        display_df = results[cols]
+        
+        # 표 출력
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
     else:
         st.warning(f"'{search_term}' 검색 결과가 없습니다.")
 else:
