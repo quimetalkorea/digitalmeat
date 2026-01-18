@@ -7,8 +7,8 @@ st.set_page_config(page_title="Digitalmeat 견적 검색기", page_icon="🥩", 
 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
-# 1. 데이터 로드 함수
-@st.cache_data
+# 1. 데이터 로드 함수 (캐시 유효시간을 1분으로 설정하여 업데이트 반영을 빠르게 함)
+@st.cache_data(ttl=60) 
 def load_data():
     file_path = "data.csv"
     if not os.path.exists(file_path):
@@ -18,6 +18,8 @@ def load_data():
         try:
             # 첫 줄을 제목으로 인식
             df = pd.read_csv(file_path, encoding=enc, header=0, on_bad_lines='skip')
+            # 모든 데이터의 앞뒤 공백 제거
+            df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
             return df
         except:
             continue
@@ -26,24 +28,26 @@ def load_data():
 df = load_data()
 
 # 2. 검색창
-search_term = st.text_input("부위명 또는 원산지를 입력하세요", "")
+search_term = st.text_input("부위명 또는 원산지 등을 입력하세요", "")
 
 if search_term:
-    # 검색은 전체 데이터(업체명 포함)에서 수행하여 검색 효율 유지
-    mask = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)
+    # 전체 데이터에서 검색 수행
+    mask = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
     results = df[mask]
 
     if not results.empty:
         st.success(f"{len(results)}개의 품목을 찾았습니다.")
         
-        # --- 업체명 열 제외 로직 ---
-        # 엑셀 파일의 '업체' 또는 '업체명' 열이 있다면 제외합니다.
-        # 열 이름을 정확히 모를 경우를 대비해 '업체'라는 글자가 포함된 열을 뺍니다.
+        # 업체명 열 제외 (사장님 요청사항)
         cols_to_show = [col for col in results.columns if '업체' not in col]
         display_df = results[cols_to_show]
         
         st.dataframe(display_df, use_container_width=True, hide_index=True)
     else:
-        st.warning("검색 결과가 없습니다.")
+        st.warning(f"'{search_term}'에 대한 검색 결과가 없습니다. (대소문자/공백 확인)")
 else:
     st.info("검색어를 입력하시면 견적 리스트에서 찾아드립니다.")
+
+# 3. 하단에 현재 데이터의 총 개수를 표시하여 업데이트 여부 확인
+if not df.empty:
+    st.caption(f"현재 등록된 총 품목 수: {len(df)}개")
