@@ -6,19 +6,22 @@ st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", 
 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
-# 구글 시트 웹 게시 주소
+# 사장님의 구글 시트 웹 게시 주소
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPI4EEFi_0oWxYkVh0jL6dT1PScbAikQIV6QM14U3KkWrZkoQ3WlDMzUzrkPGGuVd0-T7UNlKRURC-/pub?output=csv"
 
 @st.cache_data(ttl=30)
 def load_data():
     try:
+        # 데이터 로드
         df = pd.read_csv(GOOGLE_SHEET_URL)
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
         
-        # '날짜' 열이 있다면 최신순으로 정렬
+        # '날짜' 열을 문자열로 강제 변환하여 화면에 꼭 나오게 함
         if '날짜' in df.columns:
-            df['날짜'] = pd.to_datetime(df['날짜'], errors='coerce').dt.date
-            df = df.sort_values(by='날짜', ascending=False)
+            # 날짜 형식이면 정렬용 임시 열 생성 후 정렬
+            temp_date = pd.to_datetime(df['날짜'], errors='coerce')
+            df = df.iloc[temp_date.argsort()[::-1]]
+            df['날짜'] = df['날짜'].astype(str) # 화면 표시를 위해 문자열 변환
             
         return df
     except Exception as e:
@@ -28,32 +31,27 @@ def load_data():
 df = load_data()
 
 # 검색창
-search_term = st.text_input("부위명, 브랜드 또는 날짜(예: 2026-01-18)를 입력하세요", "")
+search_term = st.text_input("부위명, 브랜드 또는 날짜를 입력하세요", "")
 
 if search_term and not df.empty:
+    # 전체 열(업체명 포함)에서 검색
     mask = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
     results = df[mask]
 
     if not results.empty:
         st.success(f"검색 결과: {len(results)}건")
         
-        # --- 열 순서 재배치 및 업체명 제외 ---
-        # 1. '업체'가 들어간 열 제외
+        # '업체' 열 제외 및 '날짜' 열 위치 조정
         cols = [col for col in results.columns if '업체' not in col]
-        
-        # 2. '날짜' 열이 있다면 맨 앞으로 가져오기
         if '날짜' in cols:
             cols.insert(0, cols.pop(cols.index('날짜')))
             
-        display_df = results[cols]
-        
-        # 표 출력
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.dataframe(results[cols], use_container_width=True, hide_index=True) # 행 번호 숨김
     else:
         st.warning(f"'{search_term}' 검색 결과가 없습니다.")
 else:
-    st.info("검색어를 입력해 주세요. (날짜로도 검색이 가능합니다)")
+    st.info("검색어를 입력해 주세요. '날짜' 열이 안 보인다면 구글 시트 제목을 확인해 주세요.")
 
 if not df.empty:
     st.divider()
-    st.caption(f"📍 전체 품목 수: {len(df)}개 | 데이터 출처: 구글 스프레드시트")
+    st.caption(f"📍 현재 연결된 데이터 총 개수: {len(df)}개")
