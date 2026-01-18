@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 # 페이지 설정
-st.set_page_config(page_title="Digitalmeat 견적 검색기", page_icon="🥩")
+st.set_page_config(page_title="Digitalmeat 견적 검색기", page_icon="🥩", layout="wide")
 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
@@ -16,7 +16,7 @@ def load_data():
     
     for enc in ['utf-8-sig', 'cp949', 'euc-kr', 'utf-8']:
         try:
-            # header=0 으로 수정하여 첫 줄을 제목으로 인식하게 합니다.
+            # 첫 줄을 제목으로 인식 (header=0)
             df = pd.read_csv(file_path, encoding=enc, header=0, on_bad_lines='skip')
             return df
         except:
@@ -26,20 +26,17 @@ def load_data():
 df = load_data()
 
 # 2. 검색창
-search_term = st.text_input("부위명 또는 업체명을 입력하세요 (예: 갈비, 벨기에)", "")
+search_term = st.text_input("부위명 또는 업체명을 입력하세요", "")
 
 if search_term:
-    # 전체 열에서 검색어 포함 여부 확인
     mask = df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)
     results = df[mask]
 
     if not results.empty:
         st.success(f"{len(results)}개의 품목을 찾았습니다.")
-        # 표 출력 (숫자 인덱스를 숨기고 제목을 표시합니다)
+        # hide_index=True 설정을 통해 왼쪽 숫자 열을 완전히 제거합니다.
         st.dataframe(results, use_container_width=True, hide_index=True)
     else:
         st.warning("검색 결과가 없습니다.")
 else:
-    # 검색어가 없을 때 전체 데이터를 보여주고 싶다면 아래 주석을 해제하세요.
-    # st.dataframe(df, use_container_width=True, hide_index=True)
     st.info("검색어를 입력하시면 전체 견적 리스트에서 찾아드립니다.")
