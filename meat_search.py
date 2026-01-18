@@ -10,13 +10,14 @@ st.title("🥩 Digitalmeat 실시간 견적기")
 # 1. 데이터 로드 함수
 @st.cache_data
 def load_data():
-    file_path = "data.csv" # GitHub에 함께 올릴 데이터 파일명
+    file_path = "data.csv"
     if not os.path.exists(file_path):
         return pd.DataFrame(columns=["품목", "업체", "단가", "원산지/EST"])
     
     for enc in ['utf-8-sig', 'cp949', 'euc-kr', 'utf-8']:
         try:
-            df = pd.read_csv(file_path, encoding=enc, header=None, on_bad_lines='skip')
+            # header=0 으로 수정하여 첫 줄을 제목으로 인식하게 합니다.
+            df = pd.read_csv(file_path, encoding=enc, header=0, on_bad_lines='skip')
             return df
         except:
             continue
@@ -34,9 +35,11 @@ if search_term:
 
     if not results.empty:
         st.success(f"{len(results)}개의 품목을 찾았습니다.")
-        # 표 출력 (품목, 업체, 단가, 원산지 순서로 가정)
+        # 표 출력 (숫자 인덱스를 숨기고 제목을 표시합니다)
         st.dataframe(results, use_container_width=True, hide_index=True)
     else:
         st.warning("검색 결과가 없습니다.")
 else:
+    # 검색어가 없을 때 전체 데이터를 보여주고 싶다면 아래 주석을 해제하세요.
+    # st.dataframe(df, use_container_width=True, hide_index=True)
     st.info("검색어를 입력하시면 전체 견적 리스트에서 찾아드립니다.")
