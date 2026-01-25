@@ -8,7 +8,7 @@ st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
 # --- 구글 시트 주소 ---
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLyqNBPX1Pvtx3KhhrGpbY4n9iCYBsLDYOJqN6n2W-BWq40rFM-hbiVaYCKx537EIjHN0lHHD3tYZe/pub?output=csv"
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS3Eg-0PP1P_lJBgqtT-58k4ln06lvC9HFbKmp3OQAr278hdXbLUxbyjW7VoTVff3BfGci48vAladsi/pub?output=csv"
 
 @st.cache_data(ttl=10)
 def load_data():
