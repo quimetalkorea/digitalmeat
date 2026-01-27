@@ -7,30 +7,34 @@ st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", 
 
 st.title("🥩 Digitalmeat 실시간 견적기")
 
-# --- 구글 시트 주소 (사장님의 최신 주소 확인) ---
+# --- 구글 시트 주소 ---
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
 
-@st.cache_data(ttl=5) # 5초 캐시
+@st.cache_data(ttl=5)
 def load_data():
     try:
         df = pd.read_csv(GOOGLE_SHEET_URL)
-        # 제목 및 데이터 공백 제거
         df.columns = [str(c).strip() for c in df.columns]
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
         
-        # [날짜 정렬 로직 수정]
         if '날짜' in df.columns:
-            # 1. 날짜 열의 점(.)이나 슬래시(/)를 대시(-)로 통일
+            # 날짜 정렬을 위한 전처리
             df['날짜_clean'] = df['날짜'].astype(str).str.replace('.', '-', regex=False).str.replace('/', '-', regex=False)
-            # 2. 날짜 변환 (에러 발생했던 fuzzy 인자 제거)
             df['날짜_dt'] = pd.to_datetime(df['날짜_clean'], errors='coerce')
-            # 3. 최신순 정렬 (ascending=False: 큰 숫자인 최신 날짜가 위로)
-            # na_position='last': 날짜 인식 안 되는 행은 맨 뒤로
+            
+            # 1. 전체 데이터를 최신 날짜순으로 먼저 정렬
             df = df.sort_values(by='날짜_dt', ascending=False, na_position='last')
-            # 4. 임시 열 삭제
+
+            # --- [핵심 추가] 중복 제거 로직 ---
+            # '날짜'를 제외한 나머지 핵심 정보(품목, 브랜드, 규격 등)가 같은 행들 중 
+            # 가장 위에 있는(가장 최신 날짜인) 행만 남기고 나머지는 제거합니다.
+            duplicate_check_cols = [c for c in df.columns if c not in ['날짜', '날짜_clean', '날짜_dt']]
+            df = df.drop_duplicates(subset=duplicate_check_cols, keep='first')
+            # ------------------------------
+
             df = df.drop(columns=['날짜_dt', '날짜_clean'])
             
-        return df.drop_duplicates()
+        return df
     except Exception as e:
         st.error(f"데이터 연결 오류: {e}")
         return pd.DataFrame()
@@ -43,6 +47,7 @@ with st.sidebar:
     if st.button("🔄 데이터 강제 새로고침"):
         st.cache_data.clear()
         st.rerun()
+    st.info("💡 같은 품목은 가장 최신 날짜의 견적만 표시됩니다.")
 
 # 3. 메인 검색창
 search_input = st.text_input("🔍 검색어를 입력하세요 (예: 삼겹, 목심)", "")
@@ -51,17 +56,11 @@ if search_input and not df.empty:
     keywords = search_input.split()
     results = df.copy()
     
-    # 다중 키워드 검색
     for kw in keywords:
         results = results[results.apply(lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1)]
 
     if not results.empty:
-        # 검색 결과도 한 번 더 정렬 확인
-        if '날짜' in results.columns:
-            results['날짜_dt'] = pd.to_datetime(results['날짜'].astype(str).str.replace('.', '-', regex=False), errors='coerce')
-            results = results.sort_values(by='날짜_dt', ascending=False, na_position='last').drop(columns=['날짜_dt'])
-
-        st.success(f"검색 결과: {len(results)}건 (최신 날짜순)")
+        st.success(f"검색 결과: {len(results)}건 (중복 제외 최신 견적)")
         
         # 2단계 상세 필터
         col1, col2 = st.columns(2)
@@ -78,7 +77,7 @@ if search_input and not df.empty:
                 if selected_item != "전체":
                     results = results[results['품목'] == selected_item]
 
-        # 열 필터링 및 순서 (날짜, 품목, 단가 순)
+        # 열 필터링 및 순서
         exclude = ['업체', '창고', '비고', '원산지']
         display_cols = [c for c in results.columns if not any(k in c for k in exclude)]
         
@@ -92,15 +91,14 @@ if search_input and not df.empty:
     else:
         st.warning(f"'{search_input}'에 대한 검색 결과가 없습니다.")
 else:
-    # 초기 화면
     if not df.empty:
-        st.info("검색어를 입력하시면 상세 필터가 나타납니다. (아래는 최근 등록 순서)")
+        st.info("아래는 품목별 가장 최신 견적 리스트입니다.")
         p_exclude = ['업체', '창고', '비고', '원산지']
         p_cols = [c for c in df.columns if not any(k in c for k in p_exclude)]
         p_order = ['날짜', '품목', '단가'] + [c for c in p_cols if c not in ['날짜', '품목', '단가']]
-        st.table(df[p_order].head(20))
+        st.table(df[p_order].head(30))
 
 # 하단 정보
 if not df.empty:
     st.divider()
-    st.caption(f"📅 업데이트: {datetime.now().strftime('%H:%M:%S')} | 총 데이터: {len(df)}건")
+    st.caption(f"📅 업데이트: {datetime.now().strftime('%H:%M:%S')} | 품목 종류: {len(df)}종")
