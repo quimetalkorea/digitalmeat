@@ -10,7 +10,7 @@ st.title("🥩 Digitalmeat 실시간 견적기")
 # --- 구글 시트 주소 ---
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=600)
 def load_data():
     try:
         df = pd.read_csv(GOOGLE_SHEET_URL)
