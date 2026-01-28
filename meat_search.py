@@ -5,14 +5,6 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", layout="wide")
 
-# 스타일 설정
-st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stDataFrame { border: 1px solid #ddd; }
-    </style>
-    """, unsafe_allow_html=True)
-
 st.title("🥩 Digitalmeat 실시간 견적기")
 
 # --- 구글 시트 주소 ---
@@ -53,26 +45,43 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
     st.info("💡 1분마다 자동 새로고침")
-    st.caption(f"마지막 확인: {datetime.now().strftime('%H:%M:%S')}")
 
-# 3. 검색 및 출력 로직
-search_input = st.text_input("🔍 검색어 입력 (품목, 브랜드 등)", "")
+# 3. 메인 검색 및 필터 로직
+search_input = st.text_input("🔍 검색어 입력 (예: 삼겹, 목심)", "")
 
-# 사장님이 요청하신 순서: 날짜, 품목, 등급, EST, 단가
+# 사장님이 요청하신 출력 순서
 FIXED_ORDER = ['날짜', '품목', '등급', 'EST', '단가']
 
 if search_input and not df.empty:
     keywords = search_input.split()
     results = df.copy()
+    
+    # 키워드 검색 적용
     for kw in keywords:
         results = results[results.apply(lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1)]
 
     if not results.empty:
-        # 제외할 열
+        # --- [복구] 브랜드별, 품목별 상세 필터 ---
+        col1, col2 = st.columns(2)
+        with col1:
+            if '브랜드' in results.columns:
+                brand_options = ["전체"] + sorted([str(b) for b in results['브랜드'].unique() if b])
+                selected_brand = st.selectbox("📍 브랜드별 보기", brand_options)
+                if selected_brand != "전체":
+                    results = results[results['브랜드'] == selected_brand]
+        with col2:
+            if '품목' in results.columns:
+                item_options = ["전체"] + sorted([str(i) for i in results['품목'].unique() if i])
+                selected_item = st.selectbox("📍 품목별 보기", item_options)
+                if selected_item != "전체":
+                    results = results[results['품목'] == selected_item]
+        
+        st.success(f"검색 결과: {len(results)}건")
+
+        # 열 순서 재배치 (날짜, 품목, 등급, EST, 단가 순)
         exclude = ['업체', '창고', '비고', '원산지']
         display_cols = [c for c in results.columns if c not in exclude]
         
-        # 순서 재배치
         final_cols = [c for c in FIXED_ORDER if c in display_cols]
         other_cols = [c for c in display_cols if c not in final_cols]
         
@@ -82,7 +91,7 @@ if search_input and not df.empty:
 else:
     # 초기 화면 미리보기
     if not df.empty:
-        st.write("### 🕒 최신 견적 현황")
+        st.write("### 🕒 최신 견적 현황 (TOP 20)")
         preview_cols = [c for c in FIXED_ORDER if c in df.columns]
         st.table(df[preview_cols].head(20))
 
