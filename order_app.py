@@ -4,15 +4,20 @@ import requests
 st.set_page_config(page_title="Digitalmeat 주문", page_icon="📝")
 
 st.title("📝 Digitalmeat 구매 신청")
-st.info("💡 각 칸을 채우고, 마지막에 하단 [주문 신청하기] 버튼을 클릭하세요.")
+st.info("💡 각 칸을 채우고, 하단의 [주문 신청하기] 버튼을 클릭하세요.")
 
+# 💡 사장님의 웹 앱 URL을 확인해 주세요!
 URL = "https://script.google.com/macros/s/AKfycbzE3TOaH6D0pnaTwmshUXDWzXNqvcSoT6qnwD0cNm96BnOtwC4mJKIjm5bmDqo96B2f_w/exec"
 
-# form을 제거하고 일반 입력창으로 구성하면 엔터를 쳐도 전송되지 않습니다.
 st.subheader("📦 상품 주문 정보")
 
 o_company = st.text_input("업체명 (필수)*", placeholder="사장님 업체 이름을 적어주세요")
-o_item = st.text_input("품목명 (필수)*", placeholder="예: 삼겹살, 차돌박이 등")
+
+# 💡 품목명 입력 칸에 사장님이 요청하신 가이드를 추가했습니다.
+o_item = st.text_input(
+    "품목 상세 정보 (필수)*", 
+    placeholder="품목명 / 브랜드 / EST / 평중 순서로 기입해주세요 (예: 알목심 / IBP / 4625 / 25kg)"
+)
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -22,7 +27,7 @@ with col2:
 with col3:
     o_phone = st.text_input("연락처 (필수)*", placeholder="010-0000-0000")
 
-# 버튼을 눌러야만 실행되도록 설정
+# 버튼 클릭 시 전송
 if st.button("🚀 주문 신청하기"):
     if o_company and o_item and o_phone and o_qty:
         data = {
@@ -33,13 +38,14 @@ if st.button("🚀 주문 신청하기"):
             "phone": o_phone
         }
         try:
+            # 💡 구글 시트 웹 앱으로 데이터 전송
             response = requests.post(URL, json=data)
             if response.status_code == 200:
                 st.success(f"✅ {o_company} 사장님, 주문이 정상 접수되었습니다!")
                 st.balloons()
             else:
-                st.error("전송 실패! URL을 확인해주세요.")
+                st.error("전송 실패! 구글 시트의 웹 앱 URL과 배포 설정을 확인해주세요.")
         except:
-            st.error("연결 오류가 발생했습니다.")
+            st.error("연결 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
     else:
-        st.warning("필수 항목(업체명, 품목, 수량, 연락처)을 모두 입력해주세요.")
+        st.warning("필수 항목(업체명, 품목 상세, 수량, 연락처)을 모두 입력해주세요.")
