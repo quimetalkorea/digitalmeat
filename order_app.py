@@ -5,7 +5,7 @@ st.set_page_config(page_title="Digitalmeat 주문", page_icon="📝")
 st.title("📝 Digitalmeat 구매 희망 신청")
 
 # 💡 이 아래 큰따옴표("") 사이에 아까 복사한 주소를 붙여넣으세요!
-URL = "https://script.google.com/macros/s/AKfycbyYh5rvu_3Glgun9IHcAvVmCSY0JxcWuZ1QiUau-RhRHoRea5toVCnjILtMiUnIF1Qc-w/exec" 
+URL = "https://script.google.com/u/0/home/projects/1AsCbiBuRuhNRkLPBgC4igt-1shIxFWQLMD0VGaBqXjMT-CGZoi54fY3Y/edit" 
 
 with st.form("order_form", clear_on_submit=True):
     st.subheader("📦 상품 주문 정보")
