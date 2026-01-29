@@ -16,7 +16,7 @@ o_company = st.text_input("업체명 (필수)*", placeholder="사장님 업체 �
 # 💡 품목명 입력 칸에 사장님이 요청하신 가이드를 추가했습니다.
 o_item = st.text_input(
     "품목 상세 정보 (필수)*", 
-    placeholder="품목명 / 브랜드 / EST / 평중 순서로 기입해주세요 (예: 알목심 / IBP / 4625 / 25kg)"
+    placeholder="품목명 / 브랜드 / EST / 평중 /유통기한 순서로 기입해주세요 (예: 알목심 / IBP / 4625 / 25kg /1년이상 )"
 )
 
 col1, col2, col3 = st.columns(3)
