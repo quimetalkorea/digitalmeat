@@ -49,8 +49,8 @@ with st.sidebar:
 # 3. 메인 검색 및 필터 로직
 search_input = st.text_input("🔍 검색어 입력 (예: 삼겹, 목심)", "")
 
-# 사장님이 요청하신 출력 순서
-FIXED_ORDER = ['날짜', '품목', '등급', 'EST', '단가']
+# ⭐ 사장님이 요청하신 출력 순서 (브랜드를 품목 우측으로 이동)
+FIXED_ORDER = ['날짜', '품목', '브랜드', '등급', 'EST', '단가']
 
 if search_input and not df.empty:
     keywords = search_input.split()
@@ -61,7 +61,7 @@ if search_input and not df.empty:
         results = results[results.apply(lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1)]
 
     if not results.empty:
-        # --- [복구] 브랜드별, 품목별 상세 필터 ---
+        # 브랜드/품목 상세 필터
         col1, col2 = st.columns(2)
         with col1:
             if '브랜드' in results.columns:
@@ -78,7 +78,7 @@ if search_input and not df.empty:
         
         st.success(f"검색 결과: {len(results)}건")
 
-        # 열 순서 재배치 (날짜, 품목, 등급, EST, 단가 순)
+        # 열 순서 재배치
         exclude = ['업체', '창고', '비고', '원산지']
         display_cols = [c for c in results.columns if c not in exclude]
         
