@@ -3,15 +3,12 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
 
-# 1. 페이지 설정
-st.set_page_config(page_title="Digitalmeat 구매 신청", page_icon="📝")
-
+st.set_page_config(page_title="Digitalmeat 주문", page_icon="📝")
 st.title("📝 Digitalmeat 구매 희망 신청")
 
-# 2. 구글 시트 연결
+# 💡 간편 인증 연결 (JSON 열쇠가 필요 없습니다)
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# 3. 입력 폼
 with st.form("order_form", clear_on_submit=True):
     col1, col2 = st.columns(2)
     with col1:
@@ -28,7 +25,7 @@ with st.form("order_form", clear_on_submit=True):
             st.error("필수 항목을 모두 입력해 주세요.")
         else:
             try:
-                # 💡 핵심 수정: 시트 이름 지정 없이 데이터를 읽어옵니다.
+                # 시트 읽기
                 existing_data = conn.read()
                 
                 now = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -37,13 +34,11 @@ with st.form("order_form", clear_on_submit=True):
                     "수량": o_qty, "연락처": o_phone, "상태": "접수대기"
                 }])
                 
-                # 기존 데이터에 새 주문 추가
+                # 데이터 합치기 및 업데이트
                 updated_df = pd.concat([existing_data, new_row], ignore_index=True)
-                
-                # 시트 업데이트
                 conn.update(data=updated_df)
-                st.success("✅ 신청이 성공적으로 완료되었습니다!")
-                st.balloons() # 축하 효과!
                 
+                st.success("✅ 주문이 접수되었습니다!")
+                st.balloons() 
             except Exception as e:
-                st.error(f"기록 중 오류가 발생했습니다. 공유 설정을 다시 확인해 주세요. ({e})")
+                st.error(f"연결 오류: {e}")
