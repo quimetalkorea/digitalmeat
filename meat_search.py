@@ -104,3 +104,21 @@ else:
 if not df.empty:
     st.divider()
     st.caption(f"Digitalmeat | 유효 품목 수: {len(df)}종 | 마지막 업데이트: {datetime.now().strftime('%H:%M:%S')}")
+# ... 기존 견적기 코드들이 위에 있고 ...
+
+st.markdown("---") # 구분선 하나 그어주고요
+
+# 💡 실시간 구매 신청 섹션
+st.subheader("📢 필요하신 품목이 있으신가요?")
+st.write("단가 확인 후 바로 구매 신청을 남기시면 확인 후 연락드립니다.")
+
+# 버튼 디자인과 클릭 시 이동할 주소 설정
+# 'https://digitalorder.streamlit.app' 자리에 사장님의 주문 앱 주소를 넣으세요.
+order_app_url = "https://digitalorder.streamlit.app" 
+
+# 크고 눈에 띄는 버튼 만들기
+if st.button("🚀 실시간 구매 신청하러 가기 👉", use_container_width=True):
+    # 버튼 클릭 시 주문 앱으로 이동하는 링크 제공 (새 탭에서 열기)
+    st.markdown(f'<a href="{order_app_url}" target="_blank" style="text-decoration: none;"><button style="width:100%; height:50px; background-color:#ff4b4b; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">지금 바로 신청하기 (클릭)</button></a>', unsafe_allow_html=True)
+
+st.caption("© 2026 Digitalmeat. All rights reserved.")
