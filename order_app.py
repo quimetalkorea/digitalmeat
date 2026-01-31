@@ -7,7 +7,7 @@ st.title("📝 Digitalmeat 구매 신청")
 st.info("💡 각 칸을 채우고, 하단의 [주문 신청하기] 버튼을 클릭하세요.")
 
 # 💡 사장님의 웹 앱 URL을 확인해 주세요!
-URL = "https://script.google.com/macros/s/AKfycbySS1mKduoFo40pRyfrEgJF6ojb9Zn9zMMBCXnMSC55YCUhmsCgRGj2vd5S2FRjKeyuRA/exec"
+URL = "https://script.google.com/macros/s/AKfycbwKDL9e0yF7t1PSlztLsLclT27JbjjHggpz00DTm_XMhlgvPhnXEQg_aQETPpdVSv63Vw/exec"
 
 o_company = st.text_input("업체명 (필수)*", placeholder="사장님 업체 이름을 적어주세요")
 
