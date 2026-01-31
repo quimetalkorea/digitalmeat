@@ -9,8 +9,6 @@ st.info("💡 각 칸을 채우고, 하단의 [주문 신청하기] 버튼을 �
 # 💡 사장님의 웹 앱 URL을 확인해 주세요!
 URL = "https://script.google.com/macros/s/AKfycbySS1mKduoFo40pRyfrEgJF6ojb9Zn9zMMBCXnMSC55YCUhmsCgRGj2vd5S2FRjKeyuRA/exec"
 
-st.subheader("📦 상품 주문 정보")
-
 o_company = st.text_input("업체명 (필수)*", placeholder="사장님 업체 이름을 적어주세요")
 
 # 💡 품목명 입력 칸에 사장님이 요청하신 가이드를 추가했습니다.
