@@ -13,6 +13,13 @@ table {
     overflow-x: auto;
     white-space: nowrap;
     width: 100%;
+    font-size: 13px;
+}
+th, td {
+    padding: 6px 10px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>
 """, unsafe_allow_html=True)
