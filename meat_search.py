@@ -112,7 +112,7 @@ if not df.empty:
             st.warning("결과가 없습니다.")
     else:
         # 초기 화면: 최신 견적 TOP 20
-        st.write("### 🕒 최신 견적 현황 (최근 날짜순)")
+        st.write("### 🕒 최신 시세 현황")
         preview_cols = [c for c in FIXED_ORDER if c in df.columns]
 
         # 가로 스크롤 + 인덱스 없는 테이블
