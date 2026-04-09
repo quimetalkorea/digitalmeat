@@ -24,7 +24,7 @@ th, td {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🥩 Digitalmeat 실시간 견적기")
+st.title("🥩 Digitalmeat 시세 검색기")
 
 # --- 구글 시트 주소 (사장님 시트 주소 확인됨) ---
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
