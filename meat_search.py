@@ -31,8 +31,8 @@ def load_data():
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
         
         # 1. 단가 없는 데이터 삭제
-        if '단가' in df.columns:
-            df = df[df['단가'].notna() & (df['단가'] != "")]
+        if '단가(원/kg)' in df.columns:
+            df = df[df['단가(원/kg)'].notna() & (df['단가(원/kg)'] != "")]
         
         # 2. [날짜 정렬 처리] 최신순으로 정렬
         if '날짜' in df.columns:
@@ -40,6 +40,7 @@ def load_data():
             df = df.sort_values(by='날짜_dt', ascending=False, na_position='last')
             df = df.drop_duplicates(subset=['품목', '브랜드', '등급', 'EST'], keep='first')
             df = df.drop(columns=['날짜_dt'])
+            df = df.fillna("")
             
         return df
     except Exception as e:
@@ -60,7 +61,7 @@ with st.sidebar:
 search_input = st.text_input("🔍 검색어 입력 (예: 삼겹, 목심)", "")
 
 # 출력 순서 정의
-FIXED_ORDER = ['날짜', '품목', '브랜드', '등급', 'EST', '단가']
+FIXED_ORDER = ['날짜', '품목', '브랜드', '등급', 'EST', '단가(원/kg)']
 
 if not df.empty:
     if search_input:
