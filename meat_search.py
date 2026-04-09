@@ -21,6 +21,9 @@ th, td {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+h1 {
+    font-size: 1.5rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
