@@ -68,7 +68,7 @@ with st.sidebar:
 search_input = st.text_input("🔍 검색어 입력 (예: 삼겹, 목심)", "")
 
 # 출력 순서 정의
-FIXED_ORDER = ['날짜', '품목', '브랜드', '등급', 'EST', '단가(원/kg)']
+FIXED_ORDER = ['날짜', '품목', '브랜드', '단가(원/kg)', '등급', 'EST']
 
 if not df.empty:
     if search_input:
