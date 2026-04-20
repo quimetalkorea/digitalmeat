@@ -5,9 +5,10 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", layout="wide")
 
-# 가로 스크롤 CSS
+# 스타일
 st.markdown("""
 <style>
+h1 { font-size: 1.5rem !important; }
 table {
     display: block;
     overflow-x: auto;
@@ -21,38 +22,35 @@ th, td {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-h1 {
-    font-size: 1.5rem !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🥩 Digitalmeat 시세검색")
+st.title("🥩 Digitalmeat 시세 검색기")
 
-# --- 구글 시트 주소 (사장님 시트 주소 확인됨) ---
+# --- 구글 시트 주소 ---
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
 
 @st.cache_data(ttl=60)
 def load_data():
     try:
-        # 데이터 불러오기 및 기본 정리
-        df = pd.read_csv(GOOGLE_SHEET_URL)
+        df = pd.read_csv(GOOGLE_SHEET_URL, low_memory=False)
         df.columns = [str(c).strip() for c in df.columns]
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-        
-        # 1. 단가 없는 데이터 삭제
+        df = df.dropna(how='all')
         if '단가(원/kg)' in df.columns:
             df = df[df['단가(원/kg)'].notna() & (df['단가(원/kg)'] != "")]
-        
-        # 2. [날짜 정렬 처리] 최신순으로 정렬
+
         if '날짜' in df.columns:
-            df['날짜_dt'] = pd.to_datetime(df['날짜'].astype(str).str.replace('.', '-', regex=False), errors='coerce')
+            df['날짜_dt'] = pd.to_datetime(
+            df['날짜'].astype(str).str.replace(r'\s+', '', regex=True).str.replace('.', '-', regex=False),
+        errors='coerce'
+    )
             df = df.sort_values(by='날짜_dt', ascending=False, na_position='last')
-            df = df.drop_duplicates(subset=['품목', '브랜드', '등급', 'EST'], keep='first')
             df = df.drop(columns=['날짜_dt'])
-            df = df.fillna("")
-            
+
+        df = df.fillna("")
         return df
+
     except Exception as e:
         st.error(f"데이터 연결 오류: {e}")
         return pd.DataFrame()
@@ -77,7 +75,7 @@ if not df.empty:
     if search_input:
         keywords = search_input.split()
         results = df.copy()
-        
+
         for kw in keywords:
             results = results[results.apply(lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1)]
 
@@ -95,7 +93,7 @@ if not df.empty:
                     selected_item = st.selectbox("📍 품목별 보기", item_options)
                     if selected_item != "전체":
                         results = results[results['품목'] == selected_item]
-            
+
             st.success(f"검색 결과: {len(results)}건 (최신순)")
 
             exclude = ['업체', '창고', '원산지']
@@ -103,7 +101,6 @@ if not df.empty:
             final_cols = [c for c in FIXED_ORDER if c in display_cols]
             other_cols = [c for c in display_cols if c not in final_cols]
 
-            # 가로 스크롤 + 인덱스 없는 테이블
             st.markdown(
                 results[final_cols + other_cols].to_html(index=False),
                 unsafe_allow_html=True
@@ -111,17 +108,13 @@ if not df.empty:
         else:
             st.warning("결과가 없습니다.")
     else:
-        # 초기 화면: 최신 견적 TOP 20
-        st.write("### 🕒 최신 시세 현황")
+        st.write("### 🕒 최신 견적 현황 (최근 날짜순)")
         preview_cols = [c for c in FIXED_ORDER if c in df.columns]
-
-        # 가로 스크롤 + 인덱스 없는 테이블
         st.markdown(
-            df[preview_cols].head(20).to_html(index=False),
+            df[preview_cols].to_html(index=False),
             unsafe_allow_html=True
         )
 
-    # --- 하단 구매 신청 섹션 ---
     st.write("")
     st.write("")
     st.divider()
