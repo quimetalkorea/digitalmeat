@@ -25,7 +25,7 @@ th, td {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🥩 Digitalmeat 시세 검색기")
+st.title("🥩 Digitalmeat 시세 검색")
 
 # --- 구글 시트 주소 ---
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
@@ -108,7 +108,7 @@ if not df.empty:
         else:
             st.warning("결과가 없습니다.")
     else:
-        st.write("### 🕒 최신 견적 현황 (최근 날짜순)")
+        st.write("### 🕒 최신 견적(최근 순)")
         preview_cols = [c for c in FIXED_ORDER if c in df.columns]
         st.markdown(
             df[preview_cols].to_html(index=False),
