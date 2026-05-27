@@ -1,0 +1,220 @@
+"""
+미트피플 구매게시판 모니터링 + 시세 매칭 알림
+- 10분마다 미트피플 구매게시판 크롤링
+- 내 시세 데이터와 품목 매칭
+- 매칭되면 소리 알림 + latest_posts.csv 저장
+"""
+
+import requests
+import pandas as pd
+import time
+import os
+import re
+import winsound
+from datetime import datetime
+from bs4 import BeautifulSoup
+
+# =============================================
+# 설정
+# =============================================
+
+# 다음 카페 쿠키 (아래 방법으로 복사해서 붙여넣기)
+# 크롬 → 카페 로그인 → F12 → Application → Cookies → cafe.daum.net
+# 'TIARA', 'DH', 'DHP' 등의 값을 복사
+DAUM_COOKIES = {
+    "TIARA": "여기에_TIARA_값_붙여넣기",
+    "DH": "여기에_DH_값_붙여넣기",
+}
+
+# 구글 시트 시세 데이터 URL
+GOOGLE_SHEET_URL = "여기에_구글시트_URL_붙여넣기"
+
+# 미트피플 구매게시판 URL
+MEETPEOPLE_URL = "https://cafe.daum.net/meetpeople/HoTs"
+
+# CSV 저장 경로 (Streamlit 앱과 같은 폴더)
+CSV_PATH = os.path.join(os.path.dirname(__file__), "latest_posts.csv")
+
+# 확인 주기 (초)
+CHECK_INTERVAL = 10 * 60  # 10분
+
+# 이미 알림을 보낸 글번호 기록
+notified_ids = set()
+
+# =============================================
+# 시세 데이터 로드
+# =============================================
+
+def load_my_prices():
+    try:
+        df = pd.read_csv(GOOGLE_SHEET_URL, low_memory=False)
+        df.columns = [str(c).strip() for c in df.columns]
+        df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+        df = df.dropna(how="all")
+        if "단가(원/kg)" in df.columns:
+            df = df[df["단가(원/kg)"].notna() & (df["단가(원/kg)"] != "")]
+        print(f"[시세] {len(df)}개 품목 로드 완료")
+        return df
+    except Exception as e:
+        print(f"[시세] 로드 실패: {e}")
+        return pd.DataFrame()
+
+
+# =============================================
+# 미트피플 크롤링
+# =============================================
+
+def fetch_posts():
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://cafe.daum.net/",
+    }
+    try:
+        resp = requests.get(MEETPEOPLE_URL, headers=headers, cookies=DAUM_COOKIES, timeout=15)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        posts = []
+        # 다음 카페 게시글 목록 파싱
+        rows = soup.select("tr.board-list")
+        if not rows:
+            # 대안 셀렉터
+            rows = soup.select(".list_title") or soup.select("li.clear")
+
+        for row in rows:
+            try:
+                # 글번호
+                num_el = row.select_one(".num, .board-number")
+                num = num_el.get_text(strip=True) if num_el else ""
+
+                # 제목
+                title_el = row.select_one(".tit, .subject, a.link_tit")
+                title = title_el.get_text(strip=True) if title_el else ""
+
+                # 작성자
+                writer_el = row.select_one(".nick, .writer")
+                writer = writer_el.get_text(strip=True) if writer_el else ""
+
+                # 날짜
+                date_el = row.select_one(".date, .time")
+                date = date_el.get_text(strip=True) if date_el else ""
+
+                if title:
+                    posts.append({
+                        "글번호": num,
+                        "제목": title,
+                        "글쓴이": writer,
+                        "작성일": date,
+                    })
+            except Exception:
+                continue
+
+        print(f"[크롤링] {len(posts)}개 글 수집")
+        return posts
+
+    except Exception as e:
+        print(f"[크롤링] 실패: {e}")
+        return []
+
+
+# =============================================
+# 품목 매칭
+# =============================================
+
+def match_posts_with_prices(posts, price_df):
+    if price_df.empty or not posts:
+        return []
+
+    # 내 시세에 있는 품목 목록
+    my_items = []
+    if "품목" in price_df.columns:
+        my_items = price_df["품목"].dropna().unique().tolist()
+
+    matched = []
+    for post in posts:
+        title = post.get("제목", "")
+        for item in my_items:
+            if str(item) in title:
+                # 해당 품목 시세 찾기
+                item_prices = price_df[price_df["품목"] == item]
+                price_info = ""
+                if not item_prices.empty and "단가(원/kg)" in item_prices.columns:
+                    prices = item_prices["단가(원/kg)"].tolist()
+                    price_info = f"{min(prices)}~{max(prices)}원" if len(prices) > 1 else f"{prices[0]}원"
+
+                matched.append({
+                    **post,
+                    "매칭품목": item,
+                    "내시세": price_info,
+                })
+                break
+
+    return matched
+
+
+# =============================================
+# 소리 알림
+# =============================================
+
+def play_alert(count):
+    print(f"\n🔔 매칭 {count}건 발견!")
+    for _ in range(3):
+        winsound.Beep(1000, 300)
+        time.sleep(0.2)
+
+
+# =============================================
+# 메인 루프
+# =============================================
+
+def main():
+    print("=" * 50)
+    print("미트피플 모니터링 시작")
+    print(f"확인 주기: {CHECK_INTERVAL // 60}분")
+    print("=" * 50)
+
+    price_df = load_my_prices()
+
+    while True:
+        now = datetime.now().strftime("%H:%M:%S")
+        print(f"\n[{now}] 게시판 확인 중...")
+
+        posts = fetch_posts()
+
+        if posts:
+            # CSV 저장 (Streamlit 앱이 읽어감)
+            df = pd.DataFrame(posts)
+            df.to_csv(CSV_PATH, index=False, encoding="utf-8-sig")
+            print(f"[저장] {CSV_PATH}")
+
+            # 새 글만 필터 (이미 알림 보낸 것 제외)
+            new_posts = [p for p in posts if p.get("글번호") not in notified_ids]
+
+            if new_posts:
+                matched = match_posts_with_prices(new_posts, price_df)
+
+                if matched:
+                    play_alert(len(matched))
+                    for m in matched:
+                        print(f"  ✅ [{m['매칭품목']}] {m['제목']}")
+                        print(f"     내 시세: {m['내시세']}")
+                    
+                    # 매칭 결과도 CSV로 저장
+                    match_path = CSV_PATH.replace(".csv", "_matched.csv")
+                    pd.DataFrame(matched).to_csv(match_path, index=False, encoding="utf-8-sig")
+                else:
+                    print("  매칭 품목 없음")
+
+                # 알림 보낸 글번호 기록
+                for p in new_posts:
+                    notified_ids.add(p.get("글번호"))
+
+        else:
+            print("  게시글 수집 실패 (쿠키 확인 필요)")
+
+        print(f"  다음 확인: {CHECK_INTERVAL // 60}분 후")
+        time.sleep(CHECK_INTERVAL)
+
+
+if __name__ == "__main__":
+    main()
