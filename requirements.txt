@@ -1,8 +1,5 @@
 streamlit
 pandas
+requests
+beautifulsoup4
 python-dotenv
-<<<<<<< HEAD
-st-gsheets-connection
-=======
-st-gsheets-connection
->>>>>>> a68f17479e801b74df52a5cf95dba2fc1e007f55
