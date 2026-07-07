@@ -1,9 +1,13 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 1. 페이지 설정
-st.set_page_config(page_title="Digitalmeat 실시간 견적", page_icon="🥩", layout="wide")
+st.set_page_config(page_title="Digitalmeat 시세 검색", page_icon="🥩", layout="wide")
 
 # 스타일
 st.markdown("""
@@ -25,10 +29,10 @@ th, td {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🥩 Digitalmeat 시세 검색기")
+st.title("🥩 Digitalmeat 시세 검색")
 
-# --- 구글 시트 주소 ---
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkz-rmjbQOdFX7obN1ThrQ1IU7NLMLOiFP3p1LJzidK-4J0bmIYb7Tyg5HsBTgwTv4Lr8_PlzvtEuK/pub?output=csv"
+# --- 구글 시트 주소 (.env에서 불러오기) ---
+GOOGLE_SHEET_URL = os.getenv("GOOGLE_SHEET_URL")
 
 @st.cache_data(ttl=60)
 def load_data():
@@ -37,14 +41,15 @@ def load_data():
         df.columns = [str(c).strip() for c in df.columns]
         df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
         df = df.dropna(how='all')
+
         if '단가(원/kg)' in df.columns:
             df = df[df['단가(원/kg)'].notna() & (df['단가(원/kg)'] != "")]
 
         if '날짜' in df.columns:
             df['날짜_dt'] = pd.to_datetime(
-            df['날짜'].astype(str).str.replace(r'\s+', '', regex=True).str.replace('.', '-', regex=False),
-        errors='coerce'
-    )
+                df['날짜'].astype(str).str.replace(r'\s+', '', regex=True).str.replace('.', '-', regex=False),
+                errors='coerce'
+            )
             df = df.sort_values(by='날짜_dt', ascending=False, na_position='last')
             df = df.drop(columns=['날짜_dt'])
 
@@ -66,7 +71,7 @@ with st.sidebar:
     st.info("💡 1분마다 자동 새로고침")
 
 # 3. 메인 검색 및 필터 로직
-search_input = st.text_input("🔍 검색어 입력 (예: 삼겹, 목심)", "")
+search_input = st.text_input("🔍 검색어 입력 (예: IBP 목전지 244M)", "")
 
 # 출력 순서 정의
 FIXED_ORDER = ['날짜', '품목', '브랜드', '단가(원/kg)', '등급', 'EST']
@@ -77,7 +82,9 @@ if not df.empty:
         results = df.copy()
 
         for kw in keywords:
-            results = results[results.apply(lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1)]
+            results = results[results.apply(
+                lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1
+            )]
 
         if not results.empty:
             col1, col2 = st.columns(2)
@@ -114,15 +121,6 @@ if not df.empty:
             df[preview_cols].to_html(index=False),
             unsafe_allow_html=True
         )
-
-    # st.write("")
-    # st.write("")
-    # st.divider()
-    # st.subheader("📢 실시간 구매 신청")
-    # st.info("원하시는 품목의 시세를 확인하셨나요? 아래 버튼을 눌러 바로 구매 신청을 남겨주세요!")
-
-    # order_url = "https://digitalorder.streamlit.app"
-    # st.link_button("🚀 실시간 구매 신청하러 가기 (클릭)", order_url, use_container_width=True)
 
     st.write("")
     st.caption(f"Digitalmeat | 유효 품목 수: {len(df)}종 | 마지막 업데이트: {datetime.now().strftime('%H:%M:%S')}")

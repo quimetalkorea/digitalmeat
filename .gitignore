@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+debug.html
+latest_posts.csv
+latest_posts_matched.csv
+contacts.csv
