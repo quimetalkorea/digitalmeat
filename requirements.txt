@@ -1,5 +1,6 @@
 streamlit
 pandas
+python-dotenv
 <<<<<<< HEAD
 st-gsheets-connection
 =======
