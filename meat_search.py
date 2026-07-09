@@ -115,8 +115,7 @@ if not df.empty:
         else:
             st.warning("결과가 없습니다.")
     else:
-        st.write("### 🕒 최신 견적 현황 (최근 날짜순)")
-        preview_cols = [c for c in FIXED_ORDER if c in df.columns]
+               preview_cols = [c for c in FIXED_ORDER if c in df.columns]
         st.markdown(
             df[preview_cols].to_html(index=False),
             unsafe_allow_html=True
