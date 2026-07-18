@@ -15,11 +15,12 @@ import re
 import subprocess
 import sys
 import threading
+import webbrowser
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 from datetime import datetime
 
-PANEL_VERSION = "v1.4"
+PANEL_VERSION = "v1.5"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PY = sys.executable
 
@@ -120,9 +121,15 @@ class Panel:
         btnrow = tk.Frame(inqf)
         btnrow.pack(fill="x", pady=(4, 0))
         tk.Button(btnrow, text="선택 복사", command=self.copy_inquiry).pack(side="left", padx=2)
+        tk.Button(btnrow, text="연락처 복사", command=self.copy_contact).pack(side="left", padx=2)
+        tk.Button(btnrow, text="글 열기", command=self.open_inquiry_link).pack(side="left", padx=2)
         tk.Button(btnrow, text="지난 문의 불러오기", command=self.load_past_inquiries).pack(side="left", padx=2)
-        self.inquiries = []          # [(라벨, 문구)]
+        self.inquiries = []          # [(라벨, 문구, 이름, 전화, 링크)]
         self._pending_supplier = ""
+        self._pending_name = ""
+        self._pending_phone = ""
+        self._pending_link = ""
+        self._last_link = ""
         for _, script, color in DAEMONS:
             self.log.tag_config(script, foreground=color)
         self.log.tag_config("panel", foreground="#e6a817")
@@ -249,11 +256,26 @@ class Panel:
         self.root.after(200, self.poll_logs)
 
     def capture_inquiry(self, line):
-        """모니터 로그에서 '[N] 거래처...' + '문구: ...' 를 잡아 목록에 추가."""
+        """모니터 로그에서 '[N] 이름 / 역할 / 전화' + '문구: ...' 를 잡아 목록에 추가.
+        직전에 지나간 게시글 링크도 같이 저장 (판매자 확인용).
+        오류가 나도 로그 수신이 멈추지 않도록 전체를 보호."""
+        try:
+            self._capture_inquiry(line)
+        except Exception:
+            pass
+
+    def _capture_inquiry(self, line):
         s = line.strip()
-        m = re.match(r"\[\d+\]\s+(.+?)\s+/\s+(.+?)\s+/", s)
+        lm = re.search(r"(https?://cafe\.daum\.net/\S+)", s)
+        if lm:
+            self._last_link = lm.group(1)
+        m = re.match(r"\[\d+\]\s+(.+?)\s+/\s+(.+?)\s+/\s*(.*)$", s)
         if m:
             self._pending_supplier = f"{m.group(1)} ({m.group(2)})"
+            self._pending_name = m.group(1).strip()
+            phone = m.group(3).strip()
+            self._pending_phone = "" if phone in ("-", "") else phone
+            self._pending_link = self._last_link
             return
         if s.startswith("문구:"):
             text = s[len("문구:"):].strip()
@@ -261,15 +283,19 @@ class Panel:
                 return
             label = self._pending_supplier or text[:26]
             stamp = datetime.now().strftime("%H:%M")
-            self.inquiries.insert(0, (f"{stamp} {label}", text))
+            self.inquiries.insert(0, (f"{stamp} {label}", text,
+                                      self._pending_name, self._pending_phone, self._pending_link))
             self.inquiries = self.inquiries[:60]
             self.refresh_inq_list()
             self._pending_supplier = ""
+            self._pending_name = ""
+            self._pending_phone = ""
+            self._pending_link = ""
 
     def refresh_inq_list(self):
         self.inq_list.delete(0, "end")
-        for lbl, _ in self.inquiries:
-            self.inq_list.insert("end", lbl)
+        for e in self.inquiries:
+            self.inq_list.insert("end", e[0])
 
     def load_past_inquiries(self, silent=False):
         """monitor_log.txt에서 과거 문의 문구를 읽어 목록에 채움."""
@@ -305,10 +331,12 @@ class Panel:
             return
         past = entries[-30:][::-1]  # 최신이 위로
         # 현재 세션에서 잡은 것과 합치되 중복 문구 제거
-        existing_texts = {t for _, t in self.inquiries}
+        existing_texts = {e[1] for e in self.inquiries}
         for lbl, t in past:
             if t not in existing_texts:
-                self.inquiries.append((f"(지난) {lbl}", t))
+                name = lbl.split("(")[0].strip()
+                pm = re.search(r"01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}", lbl)
+                self.inquiries.append((f"(지난) {lbl}", t, name, pm.group(0) if pm else "", ""))
         self.inquiries = self.inquiries[:60]
         self.refresh_inq_list()
         self.append("panel", f"지난 문의 {len(past)}건 불러옴 (더블클릭=복사)")
@@ -317,10 +345,45 @@ class Panel:
         sel = self.inq_list.curselection()
         if not sel:
             return
-        label, text = self.inquiries[sel[0]]
+        entry = self.inquiries[sel[0]]
+        label, text = entry[0], entry[1]
         self.root.clipboard_clear()
         self.root.clipboard_append(text)
         self.append("panel", f"📋 문구 복사됨 → {label} (카톡에 Ctrl+V)")
+
+    def copy_contact(self, event=None):
+        """선택한 항목의 '이름 전화번호'를 복사 (카톡 친구추가/주소록용)."""
+        sel = self.inq_list.curselection()
+        if not sel:
+            messagebox.showinfo("선택 없음", "목록에서 판매자/거래처를 먼저 선택하세요.")
+            return
+        entry = self.inquiries[sel[0]]
+        name = entry[2] if len(entry) > 2 else ""
+        phone = entry[3] if len(entry) > 3 else ""
+        if not name:
+            name = entry[0].split("(")[0].split(" ", 1)[-1].strip()
+        if phone:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(f"{name} {phone}")
+            self.append("panel", f"📇 연락처 복사됨 → {name} {phone} (주소록에 붙여넣기)")
+        else:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(name)
+            self.append("panel", f"📇 {name} — 번호 없음. 이름만 복사됨 ([글 열기]로 게시글에서 확인하세요)")
+
+    def open_inquiry_link(self, event=None):
+        """선택한 항목의 게시글을 브라우저로 열기 (판매자 번호 확인용)."""
+        sel = self.inq_list.curselection()
+        if not sel:
+            messagebox.showinfo("선택 없음", "목록에서 항목을 먼저 선택하세요.")
+            return
+        entry = self.inquiries[sel[0]]
+        link = entry[4] if len(entry) > 4 else ""
+        if link:
+            webbrowser.open(link)
+            self.append("panel", f"🌐 게시글 열기 → {link}")
+        else:
+            messagebox.showinfo("링크 없음", "이 항목에는 저장된 게시글 링크가 없어요.\n(지난 문의는 링크가 저장되지 않습니다)")
 
     def open_file(self, fname):
         path = os.path.join(BASE_DIR, fname)

@@ -54,6 +54,8 @@ def load_data():
             df = df.drop(columns=['날짜_dt'])
 
         df = df.fillna("")
+        # 검색용 통합 컬럼 (모든 열을 한 문자열로 합침)
+        df['_검색'] = df.astype(str).agg(' '.join, axis=1)
         return df
 
     except Exception as e:
@@ -82,9 +84,7 @@ if not df.empty:
         results = df.copy()
 
         for kw in keywords:
-            results = results[results.apply(
-                lambda row: row.astype(str).str.contains(kw, case=False, na=False).any(), axis=1
-            )]
+            results = results[results['_검색'].str.contains(kw, case=False, na=False, regex=False)]
 
         if not results.empty:
             col1, col2 = st.columns(2)
@@ -103,7 +103,7 @@ if not df.empty:
 
             st.success(f"검색 결과: {len(results)}건 (최신순)")
 
-            exclude = ['업체', '창고', '원산지']
+            exclude = ['업체', '창고', '원산지', '_검색']
             display_cols = [c for c in results.columns if c not in exclude]
             final_cols = [c for c in FIXED_ORDER if c in display_cols]
             other_cols = [c for c in display_cols if c not in final_cols]

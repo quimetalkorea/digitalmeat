@@ -61,15 +61,15 @@ COLUMN_CANDIDATES = {
 # 원산지 별칭 사전: 게시글 표기 → 시트 표기 후보
 ORIGIN_ALIASES = {
     "국산": ["국산", "국내산", "국내", "한국"],
-    "미국": ["미국", "USA", "US"],
+    "미국": ["미국", "미산", "USA", "US"],
     "독일": ["독일", "GERMANY"],
     "스페인": ["스페인", "SPAIN"],
     "칠레": ["칠레", "CHILE"],
     "덴마크": ["덴마크", "DENMARK"],
     "폴란드": ["폴란드", "POLAND"],
-    "네덜란드": ["네덜란드", "화란", "NETHERLANDS"],
+    "네덜란드": ["네덜란드", "네델란드", "화란", "NETHERLANDS"],
     "벨기에": ["벨기에", "BELGIUM"],
-    "캐나다": ["캐나다", "CANADA"],
+    "캐나다": ["캐나다", "케나다", "CANADA"],
     "멕시코": ["멕시코", "MEXICO"],
     "호주": ["호주", "AUSTRALIA"],
     "뉴질랜드": ["뉴질랜드", "NZ", "NEW ZEALAND"],
@@ -92,6 +92,35 @@ BRAND_ALIASES = {
     "내셔널": "NBP",
     "엔비피": "NBP",
     "엔비": "NB",
+    "매닝비프": "매닝비프",
+    "매닝": "매닝비프",
+    "잉카롭사": "INCARLOPSA",
+    "프리발": "FRIVALL",
+    "테니스": "TONNIES",
+    "퇴니스": "TONNIES",
+    "애니맥스": "ANIMEX",
+    "가틴": "GATINE",
+    "코렌": "COREN",
+    "AFFCO": "AFFCO",
+    "아프코": "AFFCO",
+    "AASA": "AASA",
+    "아싸": "AASA",
+    "BATALLE": "BATALLE",
+    "바텔": "BATALLE",
+    "그린리아": "GREENLEA",
+    "그리니아": "GREENLEA",
+    "TBS": "TBS",
+    "슈퍼포크": "SUPERPORK",
+    "프리우사": "FRIVASA",
+    "5STAR": "5TAR",
+    "5TAR": "5TAR",
+    "SHOWCASE": "5TAR",
+    "쇼케이스": "5TAR",
+    "내셔날": "NBP",
+    "오키": "OAKEY",
+    "치코": "치코",
+    "마쳐": "마쳐",
+    "EX": "EXCEL",
     "NB": "NB",
     "AMH": "AMH",
     "에이엠에이치": "AMH",
@@ -129,7 +158,10 @@ BRAND_ALIASES = {
 GRADE_ALIASES = {
     "프라임": ["PRIME", "PR"],
     "초이스": ["CHOICE", "CH"],
-    "셀렉트": ["SELECT", "SEL"],
+    "셀렉트": ["SELECT", "SEL", "SE"],
+    "언그레이드": ["UN"],
+    "곡물": ["GF"],
+    "목초": ["GR"],
     "노롤": ["NO ROLL", "NOROLL", "NR"],
 }
 
@@ -139,8 +171,9 @@ GRADE_ALIASES = {
 KNOWN_GRADE_CODES = [
     "PRIME", "CHOICE", "SELECT", "CAB", "NOROLL", "NR",
     "MSA", "GF", "GR", "YP", "YG", "PS", "SS",
+    "UN", "AAA", "AA",
     "MB1", "MB2", "MB3", "MB4", "MB5", "MB6", "MB7", "MB8", "MB9", "MB",
-    "S", "A", "B", "PR", "CH", "SEL",
+    "S", "A", "B", "PR", "CH", "SEL", "SE",
 ]
 # 같은 계열로 취급하면 안 되는(서로 배타적인) 등급들 — 참고용
 GRADE_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]{1,4}\d{0,2})(?![A-Za-z0-9])")
@@ -169,7 +202,7 @@ QUALIFIERS_REQUIRE_MENTION = {
 SHEET_BRANDS = set()
 
 # 거래가 끝난 글 제외 키워드
-DONE_WORDS = ["판매완료", "구매완료", "거래완료", "완판", "마감"]
+DONE_WORDS = ["판매완료", "구매완료", "거래완료", "완판", "마감", "(완료)", "[완료]", "（완료）"]
 
 
 def resolve_columns(price_df):
@@ -201,7 +234,7 @@ MAX_INQUIRIES_DISPLAY = 10
 SENDER_NAME = "디지털미트 서종현"
 
 # 문의 문구 마무리 (연락 유도 + 오픈카톡 링크)
-CLOSING_LINE = "연락 함 해보세요. https://open.kakao.com/o/g0Zywnmd"
+CLOSING_LINE = "https://open.kakao.com/o/g0Zywnmd"
 
 # 매칭 후 문의 번호 입력 대기 시간(초) - 시간 내 입력 없으면 모니터링 계속
 INQUIRY_INPUT_TIMEOUT = 120
@@ -237,15 +270,12 @@ DAUM_COOKIES = {
     "AUID": "EY5Fcs8hG5ibAWDkynBmXl+d4T0707WgfMGbSNENvNM=",
     "webid": "30c5178014b04bfcb30945796007b17e",
     "webid_ts": "1783521738810",
-    "webid_sync": "1783583982883",
-    "TS": "1783583984",
-    "HTS": "59ZwWfqUbSBz_SFSQgPo-w00",
-    "ALID": "McQO3yDeJ3UqJ6leNW5Ygn9fCMgjvakPJvukmgyoKFteGKPJDEnIN5oszMeiixP2w999UI",
-    "LSID": "93978c25-3dc2-454c-9e9c-e3ee1941bfe61783583984740",
-    "__gads": "ID=e158ed4c70cfa252:T=1783583984:RT=1783583984:S=ALNI_MY4y-uxsjNfdrZ_BkP5XSyYqf7mPw",
-    "__gpi": "UID=000014b65e6d6cb6:T=1783583984:RT=1783583984:S=ALNI_MaCTJRABuXr9O5KHFjeLysV935IVw",
-    "__eoi": "ID=2da8f27023eeae69:T=1783583984:RT=1783583984:S=AA-AfjbbDOOPRFsUIoquBTxyTtT_",
-    "_T_ANO": "XnbBCA9PseDy5dpmxbbPX5miqSc6oaR9bry4QGsmA7t7VSQrLGtZBpiB0Xfv9pYtYMxGLzAAxRb81JSyNZJc33E9ZwwOnIK7Jzm7YkomTXYFk9HJ4X6EoHpt56I5H49Sr4SBaZQV875w/twSaAy6wp+v5jGhfbCHtf2ejH00jTWwBl01/wovrSRfE/ee+jMTHr/PFZwSEQAcCwTrRX5zsXaD4IPqUe2iitRnb8wP2N9cqE9lYRjP/+SD2+c4zeagFdfqF/9fLsnGJz7e9JRWC78ynzYGeO+5D9SH+LT4n5vNaIXAj+kGYSSoAsFHAJ8l90YuAmJPLNJUX/JEeZg7Jg==",
+    "webid_sync": "1783523077597",
+    "TS": "1783523084",
+    "HTS": ".4wEY9yXyaeu1mWV7LXxbg00",
+    "ALID": "6aR8djPHrf3zpK2KM8iY-rKA6gAPYYl94YEuPjcnq76iq9-GTEnIN5oszMeiixP2w999UI",
+    "LSID": "93978c25-3dc2-454c-9e9c-e3ee1941bfe61783523084992",
+    "_T_ANO": "FAZ0t/Q3yjOv2NqLMFC/PA7EuH1Mdu9I1NcbZtG4poTs/vwd7vc+hBwlF7tSEquRJVABZceo+4s+/oiDaPl9ON1X/UTpE0UOa0C5TEKOAqigu9dgEO5KoJvZqhuDMVIPupBHYIozskICNOnLS0EQ/x1Efmrzs/F6RzWMQBCdK4XlGA8jGI7l9vVWtl8w0u/TPSAEGYjYiqJJ1AJjWJdt/aXofo47hewvISdv0E8Bc9O6W1FG8++1KVzvfCRoQThsVLuPBrzjpiT+8CBToLiL26P8NTXMvIY9aFxIwBcFD6rD4IVQfe76xyQ87Et8USBb9lW9kwv1aoxNt5Akp70+dA==",
 }
 
 # =============================================
@@ -358,13 +388,20 @@ def load_contacts(verbose=True):
     return pd.DataFrame()
 
 
+# 표기 변형 정규화 (게시글 표기 → 시트 표기)
+SPELLING_VARIANTS = {"뽈살": "볼살", "뽀루살": "볼살"}
+
+
 def normalize_text(s):
-    """비교용: 공백 제거 + 소문자."""
-    return str(s).replace(" ", "").lower()
+    """비교용: 공백 제거 + 소문자 + 표기 변형 통일."""
+    t = str(s).replace(" ", "").lower()
+    for a, b in SPELLING_VARIANTS.items():
+        t = t.replace(a, b)
+    return t
 
 
 PORK_MARKERS = ["돼지", "돈"]
-BEEF_MARKERS = ["한우", "와규", "비프", "beef", "우사골", "소사골", "거세", "앵거스", "육우"]
+BEEF_MARKERS = ["한우", "와규", "비프", "beef", "우사골", "소사골", "거세", "앵거스", "육우", "젖소", "암소", "bull", "수소"]
 
 
 def detect_species(text):
@@ -379,18 +416,29 @@ def detect_species(text):
     return None
 
 
+# 원산지 축약형 (이미 '산'을 포함, 뒤에 품목이 바로 붙어도 인정: 미산스지)
+ORIGIN_SHORT = {"미산"}   # 실제 게시글에서 확인된 축약만 (다른 나라는 오탐 위험으로 제외)
+
+
 def detect_origins(title):
     """제목에서 원산지 감지. 한글 부분 문자열 오탐 방지:
-    '미국산'의 '국산'처럼 앞에 다른 한글이 붙은 경우는 제외."""
+    '미국산'의 '국산'처럼 앞에 다른 한글이 붙은 경우는 제외.
+    단, '미산' 같은 축약형은 앞에만 한글이 없으면 인정(뒤에 품목이 붙을 수 있음)."""
     found = set()
     t_norm = normalize_text(title)
     for key, variants in ORIGIN_ALIASES.items():
         for v in variants:
             if re.search(r"[가-힣]", v):
-                # 앞에 한글이 붙어 있으면 다른 단어의 일부 ('미국산'의 '국산')
-                if re.search(r"(?<![가-힣])" + re.escape(v) + r"(?:산)?(?![가-힣])", title):
-                    found.add(key)
-                    break
+                if v in ORIGIN_SHORT:
+                    # 축약형: 앞에 한글만 없으면 됨 ('미산스지' 인정, '000미산' 제외)
+                    if re.search(r"(?<![가-힣])" + re.escape(v), title):
+                        found.add(key)
+                        break
+                else:
+                    # 일반형: 앞뒤 경계 확인 ('미국산'의 '국산' 오탐 방지)
+                    if re.search(r"(?<![가-힣])" + re.escape(v) + r"(?:산)?(?![가-힣])", title):
+                        found.add(key)
+                        break
             elif len(normalize_text(v)) >= 3 and normalize_text(v) in t_norm:
                 found.add(key)
                 break
@@ -453,6 +501,7 @@ def refine_rows(title, rows):
     name_col = cols.get("품명")
 
     t_norm = normalize_text(title)
+    title_low = str(title).lower()   # 공백 보존 소문자 (브랜드 경계 검사용)
     refined = rows
     applied = False
     notes = []
@@ -468,9 +517,12 @@ def refine_rows(title, rows):
         # 긴 별칭 우선 + 단어 경계로 부분 포함 오탐 방지 (엔비 vs 엔비피, NB vs NBP)
         for alias, brand in sorted(BRAND_ALIASES.items(), key=lambda kv: -len(kv[0])):
             an = normalize_text(alias)
-            if re.fullmatch(r"[a-z0-9]+", an):
-                # 영숫자 별칭: 앞뒤로 영숫자가 안 붙어야 함
-                if re.search(r"(?<![a-z0-9])" + re.escape(an) + r"(?![a-z0-9])", t_norm):
+            if re.fullmatch(r"[a-z]+", an):
+                # 순수 알파벳 별칭: 글자 인접만 차단 (숫자 인접 허용)
+                if re.search(r"(?<![a-z])" + re.escape(an) + r"(?![a-z])", title_low):
+                    wanted.add(normalize_text(brand))
+            elif re.fullmatch(r"[a-z0-9]+", an):
+                if re.search(r"(?<![a-z0-9])" + re.escape(an) + r"(?![a-z0-9])", title_low):
                     wanted.add(normalize_text(brand))
             elif re.search(r"[가-힣]", alias):
                 # 한글 별칭: 뒤에 한글이 더 붙으면 다른 단어 (엔비 ≠ 엔비피)
@@ -479,14 +531,17 @@ def refine_rows(title, rows):
             elif alias in title:
                 wanted.add(normalize_text(brand))
         # 시트 브랜드명이 제목에 직접 등장 (NBP, TYS 등 영문 표기)
-        # 단어 경계로 매칭해서 NB가 NBP에 딸려오는 것 방지
+        # 단어 경계는 공백을 보존한 제목에서 검사 ("IBP UN"이 ibpun으로 붙어 실패하는 것 방지)
+        # 순수 알파벳 브랜드는 숫자 인접 허용 (excel86m의 excel 인식), 글자 인접만 차단 (nb≠nbp)
         for bv in rows[brand_col].dropna().astype(str).unique():
             bvn = norm_or_empty(bv)
             if len(bvn) < 2:
                 continue
-            # 영숫자 코드는 단어 경계로, 한글 포함은 부분 매칭 허용
-            if re.fullmatch(r"[a-z0-9]+", bvn):
-                if re.search(r"(?<![a-z0-9])" + re.escape(bvn) + r"(?![a-z0-9])", t_norm):
+            if re.fullmatch(r"[a-z]+", bvn):
+                if re.search(r"(?<![a-z])" + re.escape(bvn) + r"(?![a-z])", title_low):
+                    wanted.add(bvn)
+            elif re.fullmatch(r"[a-z0-9]+", bvn):
+                if re.search(r"(?<![a-z0-9])" + re.escape(bvn) + r"(?![a-z0-9])", title_low):
                     wanted.add(bvn)
             elif bvn in t_norm:
                 wanted.add(bvn)
@@ -841,6 +896,35 @@ def build_details(item_rows, supplier_col):
     return details
 
 
+# ── 블랙리스트: blacklist.txt의 회원은 매칭 제외 ──
+def load_blacklist():
+    path = os.path.join(BASE_DIR, "blacklist.txt")
+    names = set()
+    if os.path.exists(path):
+        try:
+            for enc in ("utf-8-sig", "utf-8", "cp949"):
+                try:
+                    lines = open(path, encoding=enc).read().splitlines()
+                    break
+                except UnicodeDecodeError:
+                    continue
+            for ln in lines:
+                ln = ln.strip()
+                if ln and not ln.startswith("#"):
+                    names.add(normalize_text(ln))
+        except Exception:
+            pass
+    return names
+
+
+BLACKLIST = load_blacklist()
+
+
+def is_blacklisted(author):
+    an = normalize_text(PHONE_PATTERN.sub("", str(author or "")))
+    return any(b and b in an for b in BLACKLIST)
+
+
 def match_posts_with_prices(posts, price_df):
     if price_df.empty or not posts:
         return []
@@ -855,6 +939,8 @@ def match_posts_with_prices(posts, price_df):
 
     matched = []
     for post in posts:
+        if is_blacklisted(post.get("글쓴이", "")):
+            continue
         title = post.get("제목", "")
         # 거래가 끝난 글은 매칭 제외
         if any(w in title for w in DONE_WORDS):
@@ -1166,7 +1252,7 @@ def extract_request_phrase(title):
 
 def handle_inquiries(matched, contacts_df):
     """거래처별로 매칭 건을 묶어 '구매자 연결형' 문의 문구 생성 + 클립보드 복사.
-    예: 귀사가 팔고 계신 메이플 목전지를 아이엠프레쉬 이상인님이 약 2톤 구매를 원하고 있습니다."""
+    예: 메이플 목전지를 아이엠프레쉬 이상인님이 약 2톤 구매를 원하고 있습니다."""
     # 거래처(정규화된 회사명 기준) → 매칭 건 목록
     supplier_groups = {}
     no_supplier_items = []
@@ -1214,7 +1300,7 @@ def handle_inquiries(matched, contacts_df):
         if first["전화"]:
             buyer_part += f"({first['전화']})"
         qty_part = f" {first['수량']}" if first["수량"] else ""
-        body = (f" 귀사가 팔고 계신 {first['품목표현']}{josa_eul(first['품목표현'])} "
+        body = (f" {first['품목표현']}{josa_eul(first['품목표현'])} "
                 f"{buyer_part}이{qty_part} 구매를 원하고 있습니다.")
 
         for e in items[1:]:
